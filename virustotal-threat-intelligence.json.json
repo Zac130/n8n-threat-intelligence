@@ -1,0 +1,191 @@
+{
+  "name": "Threat Intel from Virustotal",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "id": "37cb43ad-126c-45a6-ad6a-3454f1395f41",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "url": "https://www.virustotal.com/api/v3/domains/microsoft.com",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Apikey"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        224,
+        0
+      ],
+      "id": "c12f1627-ff60-45f5-afe5-630b16f6150b",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{\n`\nYou are a Cybersecurity Threat Intelligence Analyst.\n\nAnalyze this VirusTotal result:\n\nDomain: ${$json.data.id}\nReputation: ${$json.data.attributes.reputation}\nMalicious: ${$json.data.attributes.last_analysis_stats.malicious}\nSuspicious: ${$json.data.attributes.last_analysis_stats.suspicious}\n\nCreate a short report with:\n\n- Domain Name\n- Risk Level\n- Summary\n- Recommended Action\n`\n}}\n",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        448,
+        0
+      ],
+      "id": "858be3dd-0db1-41a0-96c0-d3cf1b1eacfd",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-5-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        448,
+        240
+      ],
+      "id": "ba223542-9762-423b-adf6-ad81ef31433e",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": null,
+          "name": "",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "parameters": {
+        "maxItems": 5
+      },
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        816,
+        0
+      ],
+      "id": "f0e03a4c-f9e0-45b3-b110-3863e97380e1",
+      "name": "Limit"
+    },
+    {
+      "parameters": {
+        "subject": "Virus Total Report ",
+        "message": "={{ $json.output }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1056,
+        0
+      ],
+      "id": "44d9e9c6-4623-4fd4-a5e8-198651fa38f8",
+      "name": "Send a message",
+      "webhookId": "ce6e0248-eaa6-4fb9-9ba0-8108633f7b59",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "olNMhPPZkTzIgvRW",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Limit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "f95dce72-a15b-4554-a534-84a4759118fa",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a94511e1a8277d5b73626eb1ce229292b4010b7ad2cd64c70025fb67abad1e06"
+  },
+  "nodeGroups": [],
+  "id": "EsC4o5slxSk27V3s",
+  "tags": []
+}
